@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ironarchive-postgres
+    environment:
+      POSTGRES_DB: ironarchive
+      POSTGRES_USER: ironarchive
+      POSTGRES_PASSWORD: ironarchive_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ironarchive -d ironarchive"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ironarchive-network
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Max 1 CPU core
+          memory: 1G           # Max 1GB RAM
+        reservations:
+          cpus: '0.25'         # Reserve 0.25 cores
+          memory: 256M         # Reserve 256MB
+
+  redis:
+    image: redis:7-alpine
+    container_name: ironarchive-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ironarchive-network
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'          # Max 0.5 CPU cores
+          memory: 512M         # Max 512MB RAM
+        reservations:
+          cpus: '0.1'          # Reserve 0.1 cores
+          memory: 128M         # Reserve 128MB
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: ironarchive-meilisearch
+    environment:
+      MEILI_MASTER_KEY: development_master_key_change_in_production
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_ENV: development
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:7700/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ironarchive-network
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Max 1 CPU core
+          memory: 1G           # Max 1GB RAM
+        reservations:
+          cpus: '0.25'         # Reserve 0.25 cores
+          memory: 256M         # Reserve 256MB
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  meilisearch_data:
+    driver: local
+
+networks:
+  ironarchive-network:
+    driver: bridge
