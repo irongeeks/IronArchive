@@ -1,4 +1,4 @@
-.PHONY: help dev build test clean docker-up docker-down migrate-up migrate-down backend-dev frontend-dev
+.PHONY: help dev build test clean docker-up docker-down migrate-up migrate-down migrate-create migrate-status backend-dev frontend-dev
 
 # Default target - show help
 help:
@@ -14,6 +14,8 @@ help:
 	@echo ""
 	@echo "  migrate-up     - Run database migrations"
 	@echo "  migrate-down   - Roll back database migrations"
+	@echo "  migrate-create - Create a new migration file"
+	@echo "  migrate-status - Check current migration version"
 	@echo ""
 	@echo "  backend-dev    - Start backend development server"
 	@echo "  frontend-dev   - Start frontend development server"
@@ -66,13 +68,30 @@ docker-down:
 	@echo "Docker services stopped!"
 
 # Database migrations
+# Migration tool configuration
+MIGRATE=migrate
+
+# Load DATABASE_URL from environment or .env file
+# If not set, use default for local development
+ifndef DATABASE_URL
+DATABASE_URL := postgres://ironarchive:ironarchive_password@localhost:5432/ironarchive?sslmode=disable
+endif
+
 migrate-up:
 	@echo "Running database migrations..."
-	@echo "TODO: Implement migration command"
+	$(MIGRATE) -path ./migrations -database "$(DATABASE_URL)" up
 
 migrate-down:
 	@echo "Rolling back database migrations..."
-	@echo "TODO: Implement rollback command"
+	$(MIGRATE) -path ./migrations -database "$(DATABASE_URL)" down
+
+migrate-create:
+	@read -p "Enter migration name: " name; \
+	$(MIGRATE) create -ext sql -dir ./migrations -seq $$name
+
+migrate-status:
+	@echo "Checking migration status..."
+	$(MIGRATE) -path ./migrations -database "$(DATABASE_URL)" version
 
 # Development servers
 backend-dev:

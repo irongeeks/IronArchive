@@ -67,3 +67,22 @@ func (p *PostgresConnection) Close() {
 		p.logger.Info("PostgreSQL connection pool closed")
 	}
 }
+
+// ConnectPostgres creates a simple PostgreSQL connection pool (used for testing)
+func ConnectPostgres(databaseURL string) (*pgxpool.Pool, error) {
+	ctx := context.Background()
+
+	// Parse connection URL
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse database URL: %w", err)
+	}
+
+	// Create connection pool with defaults
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create connection pool: %w", err)
+	}
+
+	return pool, nil
+}

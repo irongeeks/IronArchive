@@ -92,8 +92,29 @@ make docker-up      # Start Docker services
 make docker-down    # Stop Docker services
 make migrate-up     # Run database migrations
 make migrate-down   # Roll back database migrations
+make migrate-create # Create a new migration file
+make migrate-status # Check current migration version
 make clean          # Clean build artifacts
 ```
+
+### Database Tests
+
+The backend schema tests require the following prerequisites:
+
+- **PostgreSQL**: Running at `postgres://ironarchive:ironarchive_password@localhost:5432/ironarchive?sslmode=disable` (started via `make docker-up`)
+- **migrate CLI**: The `golang-migrate` command-line tool must be available on your PATH
+  - **macOS**: `brew install golang-migrate`
+  - **Linux**: Download from [golang-migrate releases](https://github.com/golang-migrate/migrate/releases)
+  - **Verify installation**: `migrate -version`
+
+Once prerequisites are ready, run the database tests:
+
+```bash
+cd backend
+go test ./internal/database/...
+```
+
+**Note**: The test suite automatically runs migrations up and down for each test, ensuring a clean database state.
 
 ### Project Structure
 
