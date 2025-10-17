@@ -45,8 +45,7 @@ interface User {
 - `id`: UUID - Primary key
 - `name`: string - Customer/tenant display name
 - `azure_tenant_id`: UUID - Microsoft 365 tenant ID
-- `azure_app_id`: UUID - Azure AD application ID
-- `azure_app_secret`: string - Encrypted Azure AD application secret
+- `azure_app_credentials`: string - Encrypted JSON blob with app_id + app_secret via pgcrypto
 - `retention_policy_days`: integer - Email retention period (default from global settings)
 - `legal_hold`: boolean - Legal hold flag (prevents deletion)
 - `whitelabel_config`: JSONB - Custom branding (logo URL, colors, etc.)

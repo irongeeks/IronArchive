@@ -24,6 +24,8 @@ The backend is organized as a single Go binary with distinct internal packages:
 │   │   │   ├── exports.go
 │   │   │   └── jobs.go
 │   │   └── routes.go            # Route registration
+│   ├── cache/                   # Redis-backed caches and token stores
+│   │   └── refreshstore.go
 │   ├── config/                  # Configuration
 │   │   └── config.go
 │   ├── database/                # Database layer
@@ -175,8 +177,8 @@ func (r *TenantRepository) FindAll(ctx context.Context, userRole string, userTen
 
 func (r *TenantRepository) Create(ctx context.Context, tenant *models.Tenant) error {
     query := `
-        INSERT INTO tenants (name, azure_tenant_id, azure_app_id, azure_app_secret)
-        VALUES ($1, $2, $3, pgp_sym_encrypt($4, $5))
+        INSERT INTO tenants (name, azure_tenant_id, azure_app_credentials)
+        VALUES ($1, $2, pgp_sym_encrypt($3, $4))
         RETURNING id, created_at
     `
 
@@ -185,8 +187,7 @@ func (r *TenantRepository) Create(ctx context.Context, tenant *models.Tenant) er
         query,
         tenant.Name,
         tenant.AzureTenantID,
-        tenant.AzureAppID,
-        tenant.AzureAppSecret,
+        tenant.AzureAppCredentials, // JSON string with app_id + app_secret
         getEncryptionKey(), // From config
     ).Scan(&tenant.ID, &tenant.CreatedAt)
 
@@ -249,3 +250,10 @@ func RequireMSPAdmin() fiber.Handler {
 }
 ```
 
+### Configuration Loading
+
+The configuration package exposes `config.Load()` which populates a typed `Config` struct from environment variables (loading `.env` in development). All services and handlers should receive configuration via dependency injection, avoiding global environment lookups.
+
+### Refresh Token Session Store
+
+Refresh token sessions are stored in Redis via `internal/cache/refreshstore.go`. The store persists hashed refresh token identifiers, enforces the seven-day TTL defined in the security requirements, and exposes helpers used by `AuthService` to revoke sessions on logout or refresh.

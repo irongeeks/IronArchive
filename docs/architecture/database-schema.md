@@ -29,8 +29,7 @@ CREATE TABLE tenants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     azure_tenant_id UUID NOT NULL,
-    azure_app_id UUID NOT NULL,
-    azure_app_secret TEXT NOT NULL, -- Encrypted
+    azure_app_credentials TEXT NOT NULL, -- Encrypted JSON blob with app_id + app_secret via pgcrypto
     retention_policy_days INTEGER DEFAULT 2555, -- ~7 years
     legal_hold BOOLEAN DEFAULT FALSE,
     whitelabel_config JSONB,
